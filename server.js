@@ -87,6 +87,104 @@ router.post('/signin', function (req, res) {
     })
 });
 
+router.route('/movies')
+    .get(authJwtController.isAuthenticated, async (req, res) => {
+        try {
+            const movies = await Movie.find();
+            res.status(200).json(movies);
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ success: false, msg: 'Something went wrong.' });
+        }
+    })
+    .post(authJwtController.isAuthenticated, async (req, res) => {
+        if (!req.body.title || !req.body.releaseDate || !req.body.genre || !req.body.actors) {
+            return res.status(400).json({
+                success: false,
+                msg: 'Please include title, releaseDate, genre, and actors.'
+            });
+        }
+
+        if (req.body.actors.length < 3) {
+            return res.status(400).json({
+                success: false,
+                msg: 'Movies must have at least 3 actors.'
+            });
+        }
+
+        try {
+            const movie = new Movie({
+                title: req.body.title,
+                releaseDate: req.body.releaseDate,
+                genre: req.body.genre,
+                actors: req.body.actors,
+            });
+
+            const savedMovie = await movie.save();
+            res.status(200).json({ movie: savedMovie });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ success: false, msg: 'Something went wrong.' });
+        }
+    })
+    .put(authJwtController.isAuthenticated, async (req, res) => {
+        res.status(405).json({ success: false, msg: 'PUT not supported on /movies. Use /movies/:id.' });
+    })
+    .delete(authJwtController.isAuthenticated, async (req, res) => {
+        res.status(405).json({ success: false, msg: 'DELETE not supported on /movies. Use /movies/:id.' });
+    });
+
+router.route('/movies/:id')
+    .get(authJwtController.isAuthenticated, async (req, res) => {
+        try {
+            const movie = await Movie.findById(req.params.id);
+
+            if (!movie) {
+                return res.status(404).json({ success: false, msg: 'Movie not found.' });
+            }
+
+            res.status(200).json(movie);
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ success: false, msg: 'Something went wrong.' });
+        }
+    })
+    .put(authJwtController.isAuthenticated, async (req, res) => {
+        try {
+            const movie = await Movie.findByIdAndUpdate(
+                req.params.id,
+                req.body,
+                { new: true }
+            );
+
+            if (!movie) {
+                return res.status(404).json({ success: false, msg: 'Movie not found.' });
+            }
+
+            res.status(200).json({ success: true, msg: 'Movie updated.', movie: movie });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ success: false, msg: 'Something went wrong.' });
+        }
+    })
+    .delete(authJwtController.isAuthenticated, async (req, res) => {
+        try {
+            const movie = await Movie.findByIdAndDelete(req.params.id);
+
+            if (!movie) {
+                return res.status(404).json({ success: false, msg: 'Movie not found.' });
+            }
+
+            res.status(200).json({ success: true, msg: 'Movie deleted.', movie: movie });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ success: false, msg: 'Something went wrong.' });
+        }
+    })
+    .post(authJwtController.isAuthenticated, async (req, res) => {
+        res.status(405).json({ success: false, msg: 'POST not supported on /movies/:id. Use POST /movies.' });
+    });
+
 app.use('/', router);
 app.listen(process.env.PORT || 8080);
 module.exports = app; // for testing only
