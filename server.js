@@ -11,6 +11,7 @@ var authController = require('./auth');
 var authJwtController = require('./auth_jwt');
 var jwt = require('jsonwebtoken');
 var cors = require('cors');
+var mongoose = require('mongoose');
 var User = require('./Users');
 var Movie = require('./Movies');
 var Review = require('./Reviews');
@@ -137,6 +138,26 @@ router.route('/movies')
 router.route('/movies/:id')
     .get(authJwtController.isAuthenticated, async (req, res) => {
         try {
+            if (req.query.reviews === 'true') {
+                const result = await Movie.aggregate([
+                    { $match: { _id: new mongoose.Types.ObjectId(req.params.id) } },
+                    {
+                        $lookup: {
+                            from: 'reviews',
+                            localField: '_id',
+                            foreignField: 'movieId',
+                            as: 'reviews'
+                        }
+                    }
+                ]);
+
+                if (!result || result.length === 0) {
+                    return res.status(404).json({ success: false, msg: 'Movie not found.' });
+                }
+
+                return res.status(200).json(result[0]);
+            }
+
             const movie = await Movie.findById(req.params.id);
 
             if (!movie) {
