@@ -185,6 +185,33 @@ router.route('/movies/:id')
         res.status(405).json({ success: false, msg: 'POST not supported on /movies/:id. Use POST /movies.' });
     });
 
+router.post('/reviews', authJwtController.isAuthenticated, async (req, res) => {
+    try {
+        if (!req.body.movieId) {
+            return res.status(400).json({ success: false, msg: 'Please include a movieId.' });
+        }
+
+        const movie = await Movie.findById(req.body.movieId);
+
+        if (!movie) {
+            return res.status(404).json({ success: false, msg: 'Movie not found.' });
+        }
+
+        const review = new Review({
+            movieId: req.body.movieId,
+            username: req.user.username,
+            review: req.body.review,
+            rating: req.body.rating,
+        });
+
+        await review.save();
+        res.status(200).json({ message: 'Review created!' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, msg: 'Something went wrong.' });
+    }
+});
+
 app.use('/', router);
 app.listen(process.env.PORT || 8080);
 module.exports = app; // for testing only
