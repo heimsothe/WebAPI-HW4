@@ -196,6 +196,9 @@ router.route('/movies/:id')
                 return res.status(404).json({ success: false, msg: 'Movie not found.' });
             }
 
+            // Clean up any reviews associated with the deleted movie
+            await Review.deleteMany({ movieId: req.params.id });
+
             res.status(200).json({ success: true, msg: 'Movie deleted.', movie: movie });
         } catch (err) {
             console.error(err);
