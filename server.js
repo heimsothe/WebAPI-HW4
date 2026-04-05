@@ -12,6 +12,7 @@ var authJwtController = require('./auth_jwt');
 var jwt = require('jsonwebtoken');
 var cors = require('cors');
 var mongoose = require('mongoose');
+var crypto = require('crypto');
 var User = require('./Users');
 var Movie = require('./Movies');
 var Review = require('./Reviews');
@@ -209,6 +210,36 @@ router.route('/movies/:id')
         res.status(405).json({ success: false, msg: 'POST not supported on /movies/:id. Use POST /movies.' });
     });
 
+function trackDimension(category, action, label, value, dimension, metric) {
+    var GA_MEASUREMENT_ID = process.env.GA_MEASUREMENT_ID;
+    var GA_API_SECRET = process.env.GA_API_SECRET;
+
+    if (!GA_MEASUREMENT_ID || !GA_API_SECRET) return;
+
+    fetch(
+        'https://www.google-analytics.com/mp/collect?measurement_id=' +
+        GA_MEASUREMENT_ID + '&api_secret=' + GA_API_SECRET,
+        {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                client_id: crypto.randomUUID(),
+                events: [{
+                    name: 'movie_review',
+                    params: {
+                        event_category: category,
+                        event_action: action,
+                        event_label: label,
+                        event_value: value,
+                        movie_name: dimension,
+                        requested: metric
+                    }
+                }]
+            })
+        }
+    );
+}
+
 router.post('/reviews', authJwtController.isAuthenticated, async (req, res) => {
     try {
         if (!req.body.movieId) {
@@ -229,6 +260,14 @@ router.post('/reviews', authJwtController.isAuthenticated, async (req, res) => {
         });
 
         await review.save();
+        trackDimension(
+            movie.genre,
+            'post /reviews',
+            'API Request for Movie Review',
+            1,
+            movie.title,
+            1
+        );
         res.status(200).json({ message: 'Review created!' });
     } catch (err) {
         console.error(err);
