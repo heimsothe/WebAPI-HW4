@@ -80,3 +80,10 @@ All routes require JWT authentication. Obtain a token via `POST /signin`.
 1. Import the Collection JSON and Environment JSON into Postman (or use the Postman links above)
 2. Select the **HEIMSOTH - HW4** environment
 3. Run the collection — all 15 requests should pass
+
+## Extra Credit: GA4 Custom Analytics
+Each time a review is posted via `POST /reviews`, a `movie_review` event is sent to Google Analytics 4 using the Measurement Protocol. The event includes the movie's genre, title, and review metadata as custom parameters.
+
+***Note:*** *Report is not available yet in Google Analytics. I will add it to the repo once it is available.*
+
+![GA4 Event Count - movie_review](GA_Event_Count_movie_review.png)
