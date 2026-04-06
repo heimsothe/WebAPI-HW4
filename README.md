@@ -84,6 +84,6 @@ All routes require JWT authentication. Obtain a token via `POST /signin`.
 ## Extra Credit: GA4 Custom Analytics
 Each time a review is posted via `POST /reviews`, a `movie_review` event is sent to Google Analytics 4 using the Measurement Protocol. The event includes the movie's genre, title, and review metadata as custom parameters.
 
-***Note:*** *Report is not available yet in Google Analytics. I will add it to the repo once it is available.*
-
 ![GA4 Event Count - movie_review](GA_Event_Count_movie_review.png)
+
+[GA4 Report: movie_review Event Count](GA_Event_name_movie_review.pdf)
